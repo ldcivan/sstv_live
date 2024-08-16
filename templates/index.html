@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSTV Web App</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 50px;
+      }
+      #status {
+        font-size: 24px;
+      }
+      audio {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SSTV on MartinM1</h1>
+    <div id="status">
+      <p>Loading...</p>
+    </div>
+    <audio id="audioPlayer" controls>
+      <source id="audioSource" src="/audio" type="audio/wav">
+      Your browser does not support the audio element.
+    </audio>
+    <script>
+      let currentImage = "";
+      let audioPlaying = false;
+
+      function fetchStatus() {
+        fetch('/status')
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('status').innerHTML = `
+              <p>Current Image: ${data.current_image}</p>
+              <p>Audio Length: ${data.audio_length.toFixed(2)} seconds</p>
+            `;
+            
+	    console.log(currentImage + data.current_image);
+            if (currentImage !== data.current_image) {
+              currentImage = data.current_image;
+              const audioPlayer = document.getElementById('audioPlayer');
+              const audioSource = document.getElementById('audioSource');
+              const newAudioSrc = "/audio?" + new Date().getTime(); // 添加时间戳以避免缓存
+
+              audioSource.src = newAudioSrc;
+              audioPlayer.load();
+	      setTimeout(5000);
+              audioPlayer.play().then(() => {
+                audioPlaying = true;
+              }).catch(error => {
+                console.log('Autoplay failed:', error);
+                audioPlaying = false;
+              });
+            }
+          });
+      }
+
+      setInterval(fetchStatus, 1000);
+      fetchStatus();
+    </script>
+  </body>
+</html>
